@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sort"
 )
 
 type Matches struct {
@@ -51,12 +52,10 @@ func main() {
 	var matches Matches
 	var unfilteredTeams UnfilteredTeams
 	var teams Teams
-	// var teamsList []string
 
 	json.Unmarshal(byteValue, &matches)
 
 	for i := 0; i < len(matches.Matches); i++ {
-		// fmt.Printf("| Match Date: %s | Season Game: %d | Match Day: %d | Full Time Result: %s | Home Team: %s | Full Time Home Goals: %d | Away Team: %s | Full Time Away Goals: %d |\n", matches.Matches[i].MatchDate, matches.Matches[i].SeasonGame, matches.Matches[i].MatchDay, matches.Matches[i].FullTimeResult, matches.Matches[i].HomeTeam, matches.Matches[i].FullTimeHomeGoals, matches.Matches[i].AwayTeam, matches.Matches[i].FullTimeAwayGoals)
 		unfilteredTeams.Teams = append(unfilteredTeams.Teams, matches.Matches[i].HomeTeam, matches.Matches[i].AwayTeam)
 	}
 
@@ -72,7 +71,7 @@ func main() {
 				continue
 			}
 
-			if matches.Matches[i].HomeTeam != team.Name {
+			if matches.Matches[i].HomeTeam == team.Name {
 				switch matches.Matches[i].FullTimeResult {
 				case "H":
 					team.Wins++
@@ -101,13 +100,15 @@ func main() {
 				team.TotalGoals += matches.Matches[i].FullTimeAwayGoals
 			}
 		}
-		fmt.Printf("Name: %s, Points: %d, Wins: %d, Loses: %d, Draws: %d, Goals: %d,\n", team.Name, team.Points, team.Wins, team.Loses, team.Draws, team.TotalGoals)
+
 		teams.Teams = append(teams.Teams, team)
 	}
 
-	// fmt.Println(removeDuplicates(unfilteredTeams.Teams))
+	_ = sortTeams(teams)
 
-	// fmt.Print(teams)
+	for i := 0; i < len(teams.Teams); i++ {
+		fmt.Printf("Name: %s, Points: %d, Wins: %d, Loses: %d, Draws: %d, Goals: %d,\n", teams.Teams[i].Name, teams.Teams[i].Points, teams.Teams[i].Wins, teams.Teams[i].Loses, teams.Teams[i].Draws, teams.Teams[i].TotalGoals)
+	}
 
 	defer file.Close()
 }
@@ -124,4 +125,12 @@ func removeDuplicates(strString []string) []string {
 	}
 
 	return list
+}
+
+func sortTeams(unorderedTeams Teams) Teams {
+	sort.Slice(unorderedTeams.Teams[:], func(i, j int) bool {
+		return unorderedTeams.Teams[i].Points > unorderedTeams.Teams[j].Points
+	})
+
+	return unorderedTeams
 }
